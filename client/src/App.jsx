@@ -9,9 +9,14 @@ import Analytics from './components/Analytics';
 import FieldsPage from './components/FieldsPage';
 import AgentsPage from './components/AgentsPage';
 import Layout from './components/Layout';
+import RoleBasedRouter from './components/RoleBasedRouter';
 
 function App() {
-  const { token } = useAuthStore();
+  const { token, initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -19,7 +24,7 @@ function App() {
         <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
         <Route path="/" element={token ? <Layout /> : <Navigate to="/login" />}>
           <Route index element={<Homepage />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<RoleBasedRouter />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="fields" element={<FieldsPage />} />
           <Route path="agents" element={<AgentsPage />} />

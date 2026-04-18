@@ -33,8 +33,10 @@ export const useAuthStore = create(
     {
       name: 'auth-storage',
       onRehydrateStorage: () => (state) => {
-        // Don't set auth header on rehydration to prevent 401 errors
-        // Auth header will be set when user actually logs in
+        // Set auth header on rehydration to maintain authentication
+        if (state?.token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+        }
       }
     }
   )

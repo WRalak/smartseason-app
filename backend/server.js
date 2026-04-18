@@ -49,7 +49,7 @@ app.use('/api/updates', authenticateToken, updateRoutes);
 // Error handling
 app.use(errorHandler);
 
-const PORT = 8000;
+const PORT = 4000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

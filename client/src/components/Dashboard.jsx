@@ -11,17 +11,30 @@ function Dashboard() {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingField, setEditingField] = useState(null);
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === 'admin';
 
+  // Debug logging
+  console.log('Dashboard Debug:', {
+    user: user?.name,
+    userRole: user?.role,
+    userId: user?.id,
+    isAdmin,
+    fieldsCount: fields.length
+  });
+
   const fetchFields = async () => {
     try {
+      console.log('Fetching fields...');
       const response = await api.get('/fields');
+      console.log('Fields response:', response.data);
       setFields(response.data);
     } catch (error) {
       console.error('Error fetching fields:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -30,11 +43,28 @@ function Dashboard() {
   const fetchAgents = async () => {
     if (isAdmin) {
       try {
+        console.log('Fetching agents...');
         const response = await api.get('/fields/agents/list');
+        console.log('Agents response:', response.data);
         setAgents(response.data);
       } catch (error) {
         console.error('Error fetching agents:', error);
       }
+    }
+  };
+
+  const handleEditField = (field) => {
+    setEditingField(field);
+    setShowForm(true);
+  };
+
+  const handleDeleteField = async (fieldId) => {
+    try {
+      await api.delete(`/fields/${fieldId}`);
+      fetchFields();
+    } catch (error) {
+      console.error('Error deleting field:', error);
+      alert('Failed to delete field');
     }
   };
 
@@ -158,6 +188,8 @@ function Dashboard() {
             field={field}
             onClick={() => navigate(`/field/${field.id}`)}
             isAdmin={isAdmin}
+            onEdit={handleEditField}
+            onDelete={handleDeleteField}
           />
         ))}
       </div>
@@ -179,9 +211,14 @@ function Dashboard() {
 
       {showForm && (
         <FieldForm
-          onClose={() => setShowForm(false)}
+          field={editingField}
+          onClose={() => {
+            setShowForm(false);
+            setEditingField(null);
+          }}
           onSuccess={() => {
             setShowForm(false);
+            setEditingField(null);
             fetchFields();
           }}
           agents={agents}

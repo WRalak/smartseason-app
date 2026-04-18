@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/client';
+import AgentForm from './AgentForm';
 import { Users, Mail, MapPin, Plus } from 'lucide-react';
 
 function AgentsPage() {
-  const agents = [
-    { id: 1, name: 'John Agent', email: 'agent1@smartseason.com', fields: 2, status: 'Active' },
-    { id: 2, name: 'Jane Agent', email: 'agent2@smartseason.com', fields: 2, status: 'Active' },
-  ];
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
+
+  const fetchAgents = async () => {
+    try {
+      const response = await api.get('/auth/agents');
+      setAgents(response.data);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -15,6 +33,14 @@ function AgentsPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading agents...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -22,7 +48,10 @@ function AgentsPage() {
           <h1 className="text-2xl font-bold text-gray-800">Agents</h1>
           <p className="text-gray-600">Manage field agents and their assignments</p>
         </div>
-        <button className="btn-primary inline-flex items-center">
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn-primary inline-flex items-center"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Agent
         </button>
@@ -56,7 +85,7 @@ function AgentsPage() {
             <div>
               <p className="text-sm text-gray-600">Avg Fields per Agent</p>
               <p className="text-2xl font-bold text-purple-600">
-                {Math.round(agents.reduce((acc, agent) => acc + agent.fields, 0) / agents.length)}
+                {agents.length > 0 ? Math.round(agents.reduce((acc, agent) => acc + (agent.field_count || 0), 0) / agents.length) : 0}
               </p>
             </div>
             <MapPin className="w-8 h-8 text-purple-600" />
@@ -106,7 +135,7 @@ function AgentsPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
                       <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                      {agent.fields} fields
+                      {agent.field_count || 0} fields
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -115,11 +144,11 @@ function AgentsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-green-600 hover:text-green-900 mr-3">
+                    <button 
+                      onClick={() => navigate(`/fields?agent=${agent.id}`)}
+                      className="text-green-600 hover:text-green-900 mr-3"
+                    >
                       View Fields
-                    </button>
-                    <button className="text-gray-600 hover:text-gray-900">
-                      Edit
                     </button>
                   </td>
                 </tr>
@@ -128,6 +157,16 @@ function AgentsPage() {
           </table>
         </div>
       </div>
+
+      {showForm && (
+        <AgentForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            setShowForm(false);
+            fetchAgents();
+          }}
+        />
+      )}
     </div>
   );
 }

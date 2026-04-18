@@ -136,6 +136,25 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Delete field (admin only)
+router.delete('/:id', requireAdmin, async (req, res) => {
+    try {
+        // First delete related updates
+        await db.query('DELETE FROM field_updates WHERE field_id = $1', [req.params.id]);
+        
+        // Then delete the field
+        const result = await db.query('DELETE FROM fields WHERE id = $1 RETURNING *', [req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Field not found' });
+        }
+        
+        res.json({ message: 'Field deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get agents list (admin only)
 router.get('/agents/list', requireAdmin, async (req, res) => {
     try {
@@ -144,6 +163,34 @@ router.get('/agents/list', requireAdmin, async (req, res) => {
             ['agent']
         );
         res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get all agents with field counts (admin only)
+router.get('/agents', requireAdmin, async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.created_at,
+                COUNT(f.id) as field_count
+            FROM users u
+            LEFT JOIN fields f ON u.id = f.assigned_agent_id
+            WHERE u.role = 'agent'
+            GROUP BY u.id, u.name, u.email, u.created_at
+            ORDER BY u.name
+        `);
+        
+        const agents = result.rows.map(agent => ({
+            ...agent,
+            status: 'Active' // All agents are considered active for now
+        }));
+        
+        res.json(agents);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

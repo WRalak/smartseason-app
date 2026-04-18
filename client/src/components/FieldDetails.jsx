@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import api from '../api/client';
 import UpdateForm from './UpdateForm';
 import FieldForm from './FieldForm';
-import { ArrowLeft, Edit, Calendar, User, Sprout, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, User, Sprout, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
 const statusConfig = {
@@ -25,6 +25,18 @@ function FieldDetails() {
 
   const isAdmin = user?.role === 'admin';
   const canUpdate = isAdmin || (!isAdmin && field?.assigned_agent_id === user?.id);
+
+  // Debug logging
+  console.log('FieldDetails Debug:', {
+    user: user?.name,
+    userRole: user?.role,
+    userId: user?.id,
+    fieldId: field?.id,
+    fieldAgentId: field?.assigned_agent_id,
+    isAdmin,
+    canUpdate,
+    fieldStage: field?.current_stage
+  });
 
   const fetchField = async () => {
     try {
@@ -53,6 +65,18 @@ function FieldDetails() {
     fetchField();
     fetchAgents();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this field? This action cannot be undone.')) {
+      try {
+        await api.delete(`/fields/${id}`);
+        navigate('/');
+      } catch (error) {
+        console.error('Error deleting field:', error);
+        alert('Failed to delete field');
+      }
+    }
+  };
 
   const status = statusConfig[field?.computed_status] || statusConfig.active;
   const StatusIcon = status.icon;
@@ -106,6 +130,15 @@ function FieldDetails() {
                   className="btn-primary"
                 >
                   Update Stage
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handleDelete}
+                  className="inline-flex items-center px-3 py-2 border border-red-300 rounded-lg text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
                 </button>
               )}
             </div>
