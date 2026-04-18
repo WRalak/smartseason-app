@@ -118,7 +118,17 @@ const computeFieldStatus = (field) => {
 };
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
+}));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
 app.use(express.json());
 
 // Authentication middleware
@@ -143,9 +153,11 @@ const authenticateToken = (req, res, next) => {
 // Auth routes
 app.post('/api/auth/login', async (req, res) => {
   try {
+    console.log('Login attempt:', req.body);
     const { email, password } = req.body;
     
     const user = users.find(u => u.email === email);
+    console.log('User found:', user ? 'yes' : 'no');
     
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -380,7 +392,7 @@ app.post('/api/updates', authenticateToken, (req, res) => {
 // Error handling
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log('Database: In-memory (for development)');

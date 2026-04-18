@@ -11,11 +11,7 @@ import AgentsPage from './components/AgentsPage';
 import Layout from './components/Layout';
 
 function App() {
-  const { token, initializeAuth } = useAuthStore();
-
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+  const { token } = useAuthStore();
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
