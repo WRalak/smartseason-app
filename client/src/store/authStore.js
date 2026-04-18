@@ -4,7 +4,7 @@ import api from '../api/client';
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       login: async (email, password) => {
@@ -23,9 +23,20 @@ export const useAuthStore = create(
         set({ user: null, token: null });
         delete api.defaults.headers.common['Authorization'];
       },
+      initializeAuth: () => {
+        const token = get().token;
+        if (token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
+      }
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+        }
+      }
     }
   )
 );
