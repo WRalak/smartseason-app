@@ -212,7 +212,7 @@ function AgentDashboard() {
                           <div className="text-sm">
                             <span className="text-gray-500">Stage:</span>{' '}
                             <span className="font-medium capitalize">{update.previous_stage}</span>
-                            <span className="mx-1">></span>
+                            <span className="mx-1">&gt;</span>
                             <span className="font-medium capitalize">{update.new_stage}</span>
                           </div>
                         </div>
